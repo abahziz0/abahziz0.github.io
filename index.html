@@ -1055,6 +1055,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--desktop);color
 <script>
 // ── STATE ─────────────────────────────────────────────────────────
 var Z=100, openSet=new Set(), focused=null;
+
+// ── SLUGIFY ───────────────────────────────────────────────────────
+function slugify(s){return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+
 var wins=['stats','berlin','portugal','france','about','guide','contact','projects','experience','blog','terminal','settings','proj','post','imageviewer','textviewer'];
 var defpos={stats:{x:140,y:60},berlin:{x:160,y:60},portugal:{x:180,y:70},france:{x:200,y:80},about:{x:120,y:50},guide:{x:160,y:55},contact:{x:180,y:65},projects:{x:200,y:55},experience:{x:155,y:75},blog:{x:220,y:50},terminal:{x:175,y:85},settings:{x:280,y:60},proj:{x:220,y:60},post:{x:240,y:65},imageviewer:{x:180,y:70},textviewer:{x:200,y:80}};
 var curTheme='light', curColor='orange', curWp=0;
@@ -1104,7 +1108,10 @@ function cw(id){
   var w=document.getElementById('win-'+id);
   if(w){w.classList.remove('open','minimized');openSet.delete(id);}
   if(focused===id)focused=null;
-  try{history.pushState({},'','/');}catch(e){}
+  try{
+    var back=id==='post'?'/blog/':id==='proj'?'/works/':'/';
+    history.pushState({},'',(back));
+  }catch(e){}
 }
 
 // Minimize = roll up to title bar only
@@ -1396,6 +1403,7 @@ function openProj(id){
       refs+
     '</div>';
   ow('proj');
+  try{history.pushState({win:'proj',id:id},'','/works/'+id+'/');}catch(e){}
 }
 
 // ── BLOG DATA ─────────────────────────────────────────────────────
@@ -1419,6 +1427,7 @@ function openPost(idx){
     '</div>'+
     '<div class="post-body">'+p.body+'</div>';
   ow('post');
+  try{history.pushState({win:'post',idx:idx},'','/blog/'+slugify(blogData[idx].title)+'/');}catch(e){}
 }
 
 function buildGantt(){
@@ -1521,8 +1530,22 @@ renderFolders();
 // ── URL ROUTING ───────────────────────────────────────────────────
 (function(){
   var pm={about:'about',settings:'settings',contact:'contact',guide:'guide',works:'projects',blog:'blog',experience:'experience',terminal:'terminal',stats:'stats'};
-  var path=window.location.pathname.replace(/^\//,'');
-  if(pm[path])setTimeout(function(){ow(pm[path]);},400);
+  var path=window.location.pathname.replace(/^\/|\/$/g,'');
+  if(path.startsWith('blog/')){
+    var slug=path.slice(5);
+    if(slug){
+      var idx=-1;
+      blogData.forEach(function(p,i){if(slugify(p.title)===slug)idx=i;});
+      if(idx>=0)setTimeout(function(){openPost(idx);},400);
+      else setTimeout(function(){ow('blog');},400);
+    }else{setTimeout(function(){ow('blog');},400);}
+  }else if(path.startsWith('works/')){
+    var id=path.slice(6);
+    if(id&&projData[id])setTimeout(function(){openProj(id);},400);
+    else setTimeout(function(){ow('projects');},400);
+  }else if(pm[path]){
+    setTimeout(function(){ow(pm[path]);},400);
+  }
 })();
 
 // ── INIT ──────────────────────────────────────────────────────────
