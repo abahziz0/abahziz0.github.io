@@ -587,6 +587,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--desktop);color
   <div class="di" style="left:12px;top:410px" ondblclick="ow('blog')" onclick="sel(this)">
     <div class="ico file"></div><div class="di-lbl">build-log.md</div>
   </div>
+  <div class="di" style="left:12px;top:488px" ondblclick="ow('podcasts')" onclick="sel(this)">
+    <div class="ico folder"></div><div class="di-lbl">podcasts</div>
+  </div>
 
   <!-- Coin image -->
   <img id="dog" src="logo2.png" style="position:absolute;pointer-events:none;width:260px;height:260px;object-fit:contain;opacity:0.55">
@@ -1001,6 +1004,38 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--desktop);color
     <div class="ci" onclick="ow('settings')">Settings</div>
   </div>
 
+  <!-- PODCASTS -->
+  <div class="win" id="win-podcasts" style="width:620px;height:500px">
+    <div class="wtb" id="tb-podcasts">
+      <div class="wtitle">Podcasts</div>
+      <div class="wbtns">
+        <button class="wb" onclick="mw('podcasts')">−</button>
+        <button class="wb" onclick="xw('podcasts')">⊡</button>
+        <button class="wb" onclick="cw('podcasts')">×</button>
+      </div>
+    </div>
+    <div class="wbody" id="podcasts-body"></div>
+    <div class="wrz"></div>
+  </div>
+
+  <!-- YOUTUBE PLAYER -->
+  <div class="win" id="win-ytplayer" style="width:700px;height:460px">
+    <div class="wtb" id="tb-ytplayer">
+      <div class="wtitle" id="yt-win-title">Episode</div>
+      <div class="wbtns">
+        <button class="wb" onclick="mw('ytplayer')">−</button>
+        <button class="wb" onclick="xw('ytplayer')">⊡</button>
+        <button class="wb" onclick="cw('ytplayer');document.getElementById('yt-frame').src=''">×</button>
+      </div>
+    </div>
+    <div class="wbody" style="background:#000;display:flex;align-items:center;justify-content:center">
+      <iframe id="yt-frame" width="100%" height="100%" frameborder="0" allowfullscreen
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+      </iframe>
+    </div>
+    <div class="wrz"></div>
+  </div>
+
 </div><!-- /desk -->
 
 <!-- DOCK with SVG icons -->
@@ -1014,6 +1049,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--desktop);color
   <button class="dkb" onclick="ow('blog')">
     <svg viewBox="0 0 16 16"><path d="M3 5h10M3 8h10M3 11h6"/></svg>
     <div class="dtt">Blog</div>
+  </button>
+  <!-- Podcasts -->
+  <button class="dkb" onclick="ow('podcasts')">
+    <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5"/><polygon points="6.5,5.5 11.5,8 6.5,10.5" fill="white" stroke="none"/></svg>
+    <div class="dtt">Podcasts</div>
   </button>
   <!-- Contact -->
   <button class="dkb" onclick="ow('contact')">
@@ -1059,8 +1099,8 @@ var Z=100, openSet=new Set(), focused=null;
 // ── SLUGIFY ───────────────────────────────────────────────────────
 function slugify(s){return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
 
-var wins=['stats','berlin','portugal','france','about','guide','contact','projects','experience','blog','terminal','settings','proj','post','imageviewer','textviewer'];
-var defpos={stats:{x:140,y:60},berlin:{x:160,y:60},portugal:{x:180,y:70},france:{x:200,y:80},about:{x:120,y:50},guide:{x:160,y:55},contact:{x:180,y:65},projects:{x:200,y:55},experience:{x:155,y:75},blog:{x:90,y:80},terminal:{x:175,y:85},settings:{x:280,y:60},proj:{x:730,y:70},post:{x:870,y:70},imageviewer:{x:180,y:70},textviewer:{x:200,y:80}};
+var wins=['stats','berlin','portugal','france','about','guide','contact','projects','experience','blog','terminal','settings','proj','post','imageviewer','textviewer','podcasts','ytplayer'];
+var defpos={stats:{x:140,y:60},berlin:{x:160,y:60},portugal:{x:180,y:70},france:{x:200,y:80},about:{x:120,y:50},guide:{x:160,y:55},contact:{x:180,y:65},projects:{x:200,y:55},experience:{x:155,y:75},blog:{x:90,y:80},terminal:{x:175,y:85},settings:{x:280,y:60},proj:{x:730,y:70},post:{x:870,y:70},imageviewer:{x:180,y:70},textviewer:{x:200,y:80},podcasts:{x:90,y:80},ytplayer:{x:730,y:70}};
 var curTheme='light', curColor='orange', curWp=0;
 
 // ── CLOCK ─────────────────────────────────────────────────────────
@@ -1101,6 +1141,7 @@ function ow(id){
   setTimeout(function(){w.classList.remove('wop');},150);
   w.style.zIndex=++Z; focused=id; openSet.add(id);
   if(id==='terminal')setTimeout(function(){document.getElementById('ti').focus();},80);
+  if(id==='podcasts')setTimeout(renderPodcasts,50);
   try{if(urlMap[id])history.pushState({win:id},'',urlMap[id]);}catch(e){}
 }
 
@@ -1416,6 +1457,17 @@ var blogData=[
   {title:'Headless Shopify Architecture Tradeoffs',date:'08 Dec 2025',read:'7 min read',tags:['Shopify','Next.js','Headless','Architecture'],body:'<h2>The Setup</h2><p>I\'ve built headless Shopify storefronts with Next.js and the Storefront API, and I\'ve also built 10+ Liquid theme stores at agencies. Here\'s an honest comparison after doing both extensively.</p><h2>When Headless Wins</h2><p>Headless is the right call when you need a custom checkout flow that Shopify\'s native checkout can\'t support, deep integration with a custom CMS, a performance budget that Liquid themes can\'t hit, or a truly unique UX that no existing theme can approximate.</p><h2>When Liquid Wins</h2><p>For most DTC brands, a well-tuned Liquid theme with Dawn as a base delivers faster, cheaper, and more reliably than headless. Shopify\'s checkout is battle-tested. Theme updates are one click. The app ecosystem integrates cleanly. If you\'re spending under $5M/year in GMV, headless is almost certainly premature optimisation.</p><h2>The Real Cost</h2><p>Headless shifts complexity to you: custom cart persistence, checkout session management, inventory sync, discounts API quirks, and every Shopify app that hooks into the theme layer stops working out of the box. The operational overhead is real.</p>'}
 ];
 
+// ── PODCAST DATA ──────────────────────────────────────────────────
+var podcastData=[
+  {
+    title:'Episode 1 — Sample Title',
+    date:'01 Jan 2025',
+    duration:'45 min',
+    description:'Short description of what this episode covers.',
+    youtubeId:'YOUTUBE_VIDEO_ID_HERE'
+  }
+];
+
 function openPost(idx){
   var p=blogData[idx]; if(!p)return;
   document.getElementById('post-win-title').textContent=p.title;
@@ -1432,6 +1484,30 @@ function openPost(idx){
   var pw=document.getElementById('win-post');
   pw.style.width='580px';pw.style.height='620px';pw.style.left='870px';pw.style.top='70px';
   try{history.pushState({win:'post',idx:idx},'','/blog/'+slugify(blogData[idx].title)+'/');}catch(e){}
+}
+
+function renderPodcasts(){
+  var body=document.getElementById('podcasts-body'); if(!body)return;
+  var html='<div class="blhdr"><h2>Podcasts</h2><p>Click an episode to watch on YouTube.</p></div>';
+  html+='<div class="pl-shdr">EPISODES</div>';
+  podcastData.forEach(function(ep,i){
+    html+='<div class="bpost2" onclick="openEpisode('+i+')">'+
+      '<div class="bpost2-top"><div class="bpost2-ic">▶</div>'+
+      '<div class="bpost2-name">'+ep.title+'</div></div>'+
+      '<div class="bpost2-meta">'+ep.date+' · '+ep.duration+'</div>'+
+      '<div class="bpost2-excerpt">'+ep.description+'</div>'+
+      '</div>';
+  });
+  body.innerHTML=html;
+}
+
+function openEpisode(idx){
+  var ep=podcastData[idx]; if(!ep)return;
+  document.getElementById('yt-win-title').textContent=ep.title;
+  document.getElementById('yt-frame').src='https://www.youtube.com/embed/'+ep.youtubeId+'?autoplay=1';
+  var pw=document.getElementById('win-ytplayer');
+  pw.style.left='730px';pw.style.top='70px';
+  ow('ytplayer');
 }
 
 function buildGantt(){
@@ -1483,6 +1559,9 @@ var folderFiles={
     {name:'provance-2.png',        type:'image', src:'desktop/france/provance-2.png'},
     {name:'provance-4.png',        type:'image', src:'desktop/france/provance-4.png'},
     {name:'provance-lavender.png', type:'image', src:'desktop/france/provance-lavender.png'}
+  ],
+  podcasts:[
+    // Episodes are managed in podcastData; type:'video' entries go here when linking files
   ]
 };
 
